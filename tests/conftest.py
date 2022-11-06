@@ -4,7 +4,6 @@ from utils.constants import MAX_INT, WEEK, ROLES
 
 # this should be the address of the ERC-20 used by the strategy/vault
 ASSET_ADDRESS = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"  # USDC
-CASSET_ADDRESS = "0xc3d688B66703497DAA19211EEdff47f25384cdc3"  # cUSDCv3
 ASSET_WHALE_ADDRESS = "0x0A59649758aa4d66E25f08Dd01271e891fe52199"  # USDC WHALE
 
 
@@ -33,12 +32,6 @@ def asset():
 def amount(asset):
     # Use 1M
     return 1_000_000 * 10 ** asset.decimals()
-
-
-@pytest.fixture(scope="session")
-def ctoken():
-    # NOTE: adding default contract type because it's not verified
-    return Contract(CASSET_ADDRESS, project.Comet.contract_type)
 
 
 @pytest.fixture(scope="session")
@@ -76,7 +69,7 @@ def vault(gov, asset, create_vault):
 @pytest.fixture
 def create_strategy(project, strategist):
     def create_strategy(vault):
-        strategy = strategist.deploy(project.Strategy, vault.address, "strategy_name", CASSET_ADDRESS)
+        strategy = None
         return strategy
 
     yield create_strategy
