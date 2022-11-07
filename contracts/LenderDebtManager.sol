@@ -2,7 +2,6 @@
 pragma solidity 0.8.14;
 
 import "./interfaces/IVault.sol";
-import "./BaseStrategy.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 interface ILenderStrategy {
