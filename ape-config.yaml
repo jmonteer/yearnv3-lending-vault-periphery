@@ -18,6 +18,7 @@ dependencies:
     github: jmonteer/yearn-vaults-v3
     branch: master
 
+
 solidity:
   import_remapping:
     - "@openzeppelin/contracts=openzeppelin/v4.7.3"

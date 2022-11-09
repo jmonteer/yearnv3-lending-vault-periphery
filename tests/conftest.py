@@ -68,12 +68,32 @@ def vault(gov, asset, create_vault):
 
 @pytest.fixture
 def create_strategy(project, strategist):
-    def create_strategy(vault):
-        strategy = None
+    def create_strategy(vault, base, slope):
+        strategy = strategist.deploy(project.MockStrategy, vault, "strat", base, slope)  
         return strategy
 
     yield create_strategy
 
+@pytest.fixture
+def setup_debt_manager(project, gov):
+    def setup_debt_manager(vault, strategies):
+        debt_manager = gov.deploy(project.LenderDebtManager, vault)
+
+        vault.set_role(
+            debt_manager.address,
+            ROLES.DEBT_MANAGER,
+            sender=gov,
+        )
+
+        for s in strategies:
+            if vault.strategies(s).activation == 0:
+                print("STRATEGY", s.address, "NOT ADDED")
+                continue
+            debt_manager.addStrategy(s, sender=gov)
+
+        return debt_manager
+
+    yield setup_debt_manager
 
 @pytest.fixture(scope="function")
 def strategy(vault, create_strategy):
