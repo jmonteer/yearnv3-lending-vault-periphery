@@ -52,11 +52,18 @@ contract LenderDebtManager {
 
         address _lowestStrategy = strategies[_lowest];
         address _highestStrategy = strategies[_highest];
-        uint256 _lowestCurrentDebt = vault.strategies(_lowestStrategy).current_debt;
-        uint256 _highestCurrentDebt = vault.strategies(_highestStrategy).current_debt;
+        uint256 _lowestCurrentDebt = vault
+            .strategies(_lowestStrategy)
+            .current_debt;
+        uint256 _highestCurrentDebt = vault
+            .strategies(_highestStrategy)
+            .current_debt;
 
         vault.update_debt(_lowestStrategy, 0);
-        vault.update_debt(_highestStrategy, _lowestCurrentDebt + _highestCurrentDebt);
+        vault.update_debt(
+            _highestStrategy,
+            _lowestCurrentDebt + _highestCurrentDebt
+        );
     }
 
     //estimates highest and lowest apr lenders. Public for debugging purposes but not much use to general public

@@ -9,13 +9,18 @@ contract MockStrategy is BaseStrategy {
     uint256 public slope;
     uint256 constant MAX_BPS = 10_000;
 
-    constructor(address _vault, string memory _name, uint256 _base, uint256 _slope) BaseStrategy(_vault, _name) {
+    constructor(
+        address _vault,
+        string memory _name,
+        uint256 _base,
+        uint256 _slope
+    ) BaseStrategy(_vault, _name) {
         base = _base;
         slope = _slope;
     }
 
     function aprAfterDebtChange(uint256 delta) external view returns (uint256) {
-        return base - slope * (_totalAssets() + delta) / MAX_BPS;
+        return base - (slope * (_totalAssets() + delta)) / MAX_BPS;
     }
 
     function _maxWithdraw(
@@ -42,11 +47,9 @@ contract MockStrategy is BaseStrategy {
         return balanceOfAsset();
     }
 
-    function _invest() internal override {
-    }
+    function _invest() internal override {}
 
-    function _withdrawFromComet(uint256 _amount) internal {
-    }
+    function _withdrawFromComet(uint256 _amount) internal {}
 
     function balanceOfAsset() internal view returns (uint256) {
         return IERC20(asset).balanceOf(address(this));

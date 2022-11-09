@@ -43,7 +43,12 @@ def create_vault(project, gov):
         max_profit_locking_time=WEEK,
     ):
         vault = gov.deploy(
-            project.dependencies['yearn-vaults']['master'].VaultV3, asset, "VaultV3", "AV", governance, max_profit_locking_time
+            project.dependencies["yearn-vaults"]["master"].VaultV3,
+            asset,
+            "VaultV3",
+            "AV",
+            governance,
+            max_profit_locking_time,
         )
         # set vault deposit
         vault.set_deposit_limit(deposit_limit, sender=gov)
@@ -69,10 +74,11 @@ def vault(gov, asset, create_vault):
 @pytest.fixture
 def create_strategy(project, strategist):
     def create_strategy(vault, base, slope):
-        strategy = strategist.deploy(project.MockStrategy, vault, "strat", base, slope)  
+        strategy = strategist.deploy(project.MockStrategy, vault, "strat", base, slope)
         return strategy
 
     yield create_strategy
+
 
 @pytest.fixture
 def setup_debt_manager(project, gov):
@@ -94,6 +100,7 @@ def setup_debt_manager(project, gov):
         return debt_manager
 
     yield setup_debt_manager
+
 
 @pytest.fixture(scope="function")
 def strategy(vault, create_strategy):
@@ -136,4 +143,5 @@ def provide_strategy_with_debt():
 def user_interaction(strategy, vault, deposit_into_vault):
     def user_interaction():
         return
+
     yield user_interaction
