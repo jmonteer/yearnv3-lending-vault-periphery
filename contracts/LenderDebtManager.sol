@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 interface ILenderStrategy {
     function aprAfterDebtChange(
-        uint256 _delta
+        int256 _delta
     ) external view returns (uint256 _apr);
 }
 
@@ -84,7 +84,7 @@ contract LenderDebtManager {
 
         if (strategyCount == 1) {
             ILenderStrategy _strategy = ILenderStrategy(strategies[0]);
-            uint256 apr = _strategy.aprAfterDebtChange(0);
+            uint256 apr = _strategy.aprAfterDebtChange(int256(0));
             return (0, apr, 0, apr);
         }
 
@@ -103,7 +103,7 @@ contract LenderDebtManager {
                 .strategies(address(_strategy))
                 .current_debt;
             if (_strategyNav > 0) {
-                uint256 apr = _strategy.aprAfterDebtChange(0);
+                uint256 apr = _strategy.aprAfterDebtChange(int256(0));
                 if (apr < _lowestApr) {
                     _lowestApr = apr;
                     _lowest = i;
@@ -120,7 +120,7 @@ contract LenderDebtManager {
         for (uint256 i = 0; i < strategyCount; ++i) {
             uint256 apr;
             ILenderStrategy _strategy = ILenderStrategy(strategies[i]);
-            apr = _strategy.aprAfterDebtChange(toAdd);
+            apr = _strategy.aprAfterDebtChange(int256(toAdd));
 
             if (apr > highestApr) {
                 highestApr = apr;

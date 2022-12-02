@@ -19,8 +19,8 @@ contract MockStrategy is BaseStrategy {
         slope = _slope;
     }
 
-    function aprAfterDebtChange(uint256 delta) external view returns (uint256) {
-        return base - (slope * (_totalAssets() + delta)) / MAX_BPS;
+    function aprAfterDebtChange(int256 delta) external view returns (uint256) {
+        return base - (slope * (_totalAssets() + uint256(delta))) / MAX_BPS;
     }
 
     function _maxWithdraw(
