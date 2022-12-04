@@ -49,7 +49,7 @@ def create_vault(project, gov):
             governance,
             0,
         )
-                # set up fee manager
+        # set up fee manager
         # vault.set_fee_manager(fee_manager.address, sender=gov)
 
         vault.set_role(
