@@ -91,7 +91,7 @@ def create_strategy(project, strategist):
 @pytest.fixture(scope="function")
 def create_mock_strategy(project, gov, asset):
     def create_mock_strategy(vault):
-        return gov.deploy(project.MockStrategy, asset.address, vault.address)
+        return gov.deploy(project.MockSlimStrategy, asset.address, vault.address)
 
     yield create_mock_strategy
 
