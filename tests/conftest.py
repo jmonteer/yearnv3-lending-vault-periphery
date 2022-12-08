@@ -97,20 +97,25 @@ def create_mock_strategy(project, gov, asset):
 
 
 @pytest.fixture
-def create_simple_accountant(project, fee_manager):
-    def create_simple_accountant(
-        max_management_fee: int = 1_000, max_performance_fee: int = 1_000
+def create_accountant(fee_manager):
+    def create_accountant(
+        accountant, max_management_fee: int = 1_000, max_performance_fee: int = 1_000
     ):
-        return fee_manager.deploy(
-            project.SimpleAccountant, max_management_fee, max_performance_fee
-        )
+        return fee_manager.deploy(accountant, max_management_fee, max_performance_fee)
 
-    yield create_simple_accountant
+    yield create_accountant
 
 
 @pytest.fixture(scope="function")
-def simple_accountant(create_simple_accountant):
-    yield create_simple_accountant()
+def simple_accountant(create_accountant, accountant=project.SimpleAccountant):
+    yield create_accountant(accountant)
+
+
+@pytest.fixture(scope="function")
+def simple_refunds_accountant(
+    create_accountant, accountant=project.SimpleRefundsAccountant
+):
+    yield create_accountant(accountant)
 
 
 @pytest.fixture

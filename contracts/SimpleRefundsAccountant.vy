@@ -10,6 +10,8 @@ struct StrategyParams:
 interface IVault:
     def strategies(strategy: address) -> StrategyParams: view
     def balanceOf(addr: address) -> uint256: view
+    def maxWithdraw(addr: address) -> uint256: view
+    def convertToAssets(shares: uint256) -> uint256: view
     def transfer(receiver: address, amount: uint256) -> bool: nonpayable
 
 
@@ -108,31 +110,37 @@ def accept_fee_manager():
 def report(strategy: address, gain: uint256, loss: uint256) -> (uint256, uint256):
     """
     On gains, accountant will compute management and performance fees. They will be cap to a % of gain.
+    On losses, accountant will try to compensate with whatever it has
     """
-    if gain == 0:
-        # NOTE: The fees are not charged if there hasn't been any gains reported
-        return (0,0)
 
-    strategy_params: StrategyParams = IVault(msg.sender).strategies(strategy)
-    fee: Fee = self.fees[strategy]
-    duration: uint256 = block.timestamp - strategy_params.last_report
+    if gain > 0:
+        strategy_params: StrategyParams = IVault(msg.sender).strategies(strategy)
+        fee: Fee = self.fees[strategy]
+        duration: uint256 = block.timestamp - strategy_params.last_report
 
-    # Compute management_fee
-    total_fees: uint256 = (
-        strategy_params.current_debt
-        * duration
-        * fee.management_fee
-        / MAX_BPS
-        / SECS_PER_YEAR
-    )
+        # Compute management_fee
+        total_fees: uint256 = (
+            strategy_params.current_debt
+            * duration
+            * fee.management_fee
+            / MAX_BPS
+            / SECS_PER_YEAR
+        )
 
-    # Add performance fees on top of management fees if gains
-    total_fees += (gain * fee.performance_fee) / MAX_BPS
+        # Add performance fees on top of management fees if gains
+        total_fees += (gain * fee.performance_fee) / MAX_BPS
 
-    # Cap fee
-    maximum_fee: uint256 = (gain * MAX_SHARE) / MAX_BPS
+        # Cap fee
+        maximum_fee: uint256 = (gain * MAX_SHARE) / MAX_BPS
 
-    return (min(total_fees, maximum_fee), 0)
+        return (min(total_fees, maximum_fee), 0)
+
+    if loss > 0:
+        # Note: Not using maxWithdraw, as that takes only into account liquidity available in the vault
+        total_assets: uint256 = IVault(msg.sender).convertToAssets(IVault(msg.sender).balanceOf(self))
+        return (0, min(loss, total_assets))
+
+    return (0,0)
 
 
 @view
