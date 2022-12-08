@@ -17,12 +17,6 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - uses: ApeWorX/github-action@v1.1
-      with:
-        python-version: '3.9'
-        ape-version-pin: '==0.5.6'
-
-#    - name: install vyper
-#      run: pip install git+https://github.com/vyperlang/vyper
 
     - name: Compile contracts
       # TODO: Force recompiles until ape compile caching is fixed
