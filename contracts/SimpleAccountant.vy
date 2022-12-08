@@ -91,7 +91,6 @@ def set_management_fee(strategy: address, management_fee: uint256):
 @external
 def propose_fee_manager(future_fee_manager: address):
     assert msg.sender == self.fee_manager, "not fee manager"
-    assert future_fee_manager != ZERO_ADDRESS, "future fee manager != zero address"
     self.future_fee_manager = future_fee_manager
     log ProposeFeeManager(future_fee_manager)
 

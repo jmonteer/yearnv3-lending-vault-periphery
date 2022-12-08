@@ -1,6 +1,6 @@
 import pytest
 import ape
-from utils.constants import ZERO_ADDRESS, YEAR, REL_ERROR, MAX_BPS
+from utils.constants import YEAR, REL_ERROR, MAX_BPS
 
 
 def test_deployment(simple_accountant, fee_manager):
@@ -90,9 +90,6 @@ def test_propose_fee_manager__with_new_fee_manager(
 ):
     with ape.reverts("not fee manager"):
         simple_accountant.propose_fee_manager(user.address, sender=user)
-
-    with ape.reverts("future fee manager != zero address"):
-        simple_accountant.propose_fee_manager(ZERO_ADDRESS, sender=fee_manager)
 
     tx = simple_accountant.propose_fee_manager(user.address, sender=fee_manager)
     event = list(tx.decode_logs(simple_accountant.ProposeFeeManager))
