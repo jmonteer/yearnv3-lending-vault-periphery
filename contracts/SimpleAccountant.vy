@@ -97,8 +97,8 @@ def propose_fee_manager(future_fee_manager: address):
 
 @external
 def accept_fee_manager():
-    assert msg.sender == self.future_fee_manager, "not future fee manager"
     future_fee_manager: address = self.future_fee_manager
+    assert msg.sender == future_fee_manager, "not future fee manager"
     self.fee_manager = future_fee_manager
     log AcceptFeeManager(future_fee_manager)
 
