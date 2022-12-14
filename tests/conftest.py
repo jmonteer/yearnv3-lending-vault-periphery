@@ -1,6 +1,6 @@
 import pytest
 from ape import Contract, accounts, project
-from utils.constants import MAX_INT, WEEK, ROLES
+from utils.constants import MAX_INT, ROLES
 
 # this should be the address of the ERC-20 used by the strategy/vault
 ASSET_ADDRESS = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"  # USDC
@@ -24,8 +24,18 @@ def user(accounts):
 
 
 @pytest.fixture(scope="session")
+def fee_manager(accounts):
+    return accounts[2]
+
+
+@pytest.fixture(scope="session")
 def asset():
     yield Contract(ASSET_ADDRESS)
+
+
+@pytest.fixture(scope="session")
+def whale():
+    yield Contract(ASSET_WHALE_ADDRESS)
 
 
 @pytest.fixture(scope="session")
@@ -36,11 +46,7 @@ def amount(asset):
 
 @pytest.fixture(scope="session")
 def create_vault(project, gov):
-    def create_vault(
-        asset,
-        governance=gov,
-        deposit_limit=MAX_INT,
-    ):
+    def create_vault(asset, governance=gov, deposit_limit=MAX_INT, fee_manager=None):
         vault = gov.deploy(
             project.dependencies["yearn-vaults"]["master"].VaultV3,
             asset,
@@ -49,8 +55,6 @@ def create_vault(project, gov):
             governance,
             0,
         )
-        # set up fee manager
-        # vault.set_fee_manager(fee_manager.address, sender=gov)
 
         vault.set_role(
             gov.address,
@@ -59,6 +63,10 @@ def create_vault(project, gov):
         )
         # set vault deposit
         vault.set_deposit_limit(deposit_limit, sender=gov)
+
+        # set up fee manager
+        if fee_manager:
+            vault.set_accountant(fee_manager.address, sender=gov)
 
         return vault
 
@@ -78,6 +86,31 @@ def create_strategy(project, strategist):
         return strategy
 
     yield create_strategy
+
+
+@pytest.fixture(scope="function")
+def create_mock_strategy(project, gov, asset):
+    def create_mock_strategy(vault):
+        return gov.deploy(project.MockSlimStrategy, asset.address, vault.address)
+
+    yield create_mock_strategy
+
+
+@pytest.fixture
+def create_accountant(fee_manager):
+    def create_accountant(
+        accountant, max_management_fee: int = 1_000, max_performance_fee: int = 1_000
+    ):
+        return fee_manager.deploy(accountant, max_management_fee, max_performance_fee)
+
+    yield create_accountant
+
+
+@pytest.fixture(scope="function")
+def simple_refunds_accountant(
+    create_accountant, accountant=project.SimpleRefundsAccountant
+):
+    yield create_accountant(accountant)
 
 
 @pytest.fixture
@@ -126,6 +159,18 @@ def deposit_into_vault(asset, gov):
         vault.deposit(amount_to_deposit, whale.address, sender=whale)
 
     yield deposit_into_vault
+
+
+@pytest.fixture(scope="session")
+def user_deposit(asset):
+    def user_deposit(user, vault, amount):
+        initial_balance = asset.balanceOf(vault)
+        if asset.allowance(user, vault) < amount:
+            asset.approve(vault.address, MAX_INT, sender=user)
+        vault.deposit(amount, user.address, sender=user)
+        assert asset.balanceOf(vault) == initial_balance + amount
+
+    return user_deposit
 
 
 @pytest.fixture(scope="function")
