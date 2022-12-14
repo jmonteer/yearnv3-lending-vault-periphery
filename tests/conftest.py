@@ -107,11 +107,6 @@ def create_accountant(fee_manager):
 
 
 @pytest.fixture(scope="function")
-def simple_accountant(create_accountant, accountant=project.SimpleAccountant):
-    yield create_accountant(accountant)
-
-
-@pytest.fixture(scope="function")
 def simple_refunds_accountant(
     create_accountant, accountant=project.SimpleRefundsAccountant
 ):
