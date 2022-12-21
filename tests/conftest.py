@@ -1,6 +1,6 @@
 import pytest
 from ape import Contract, accounts, project
-from utils.constants import MAX_INT, ROLES
+from utils.constants import MAX_INT, ROLES, WEEK
 
 # this should be the address of the ERC-20 used by the strategy/vault
 ASSET_ADDRESS = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"  # USDC
@@ -53,7 +53,7 @@ def create_vault(project, gov):
             "VaultV3",
             "AV",
             governance,
-            0,
+            WEEK,
         )
 
         vault.set_role(
