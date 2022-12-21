@@ -120,7 +120,7 @@ def setup_debt_manager(project, gov):
 
         vault.set_role(
             debt_manager.address,
-            ROLES.DEBT_MANAGER,
+            ROLES.DEBT_MANAGER | ROLES.ACCOUNTING_MANAGER | ROLES.KEEPER,
             sender=gov,
         )
 

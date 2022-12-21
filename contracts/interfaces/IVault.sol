@@ -25,4 +25,8 @@ interface IVault {
         address strategy,
         uint256 target_debt
     ) external returns (uint256);
+
+    function process_report(address) external;
+
+    function tend_strategy(address) external;
 }
