@@ -88,4 +88,12 @@ abstract contract BaseStrategy {
     function _totalAssets() internal view virtual returns (uint256) {
         return IERC20(asset).balanceOf(address(this));
     }
+
+    function tend() external {
+        return;
+    }
+
+    function tendTrigger() external view returns (bool) {
+        return false;
+    }
 }

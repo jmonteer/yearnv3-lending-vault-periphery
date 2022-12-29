@@ -32,7 +32,12 @@ contract MockStrategy is BaseStrategy {
     function _freeFunds(
         uint256 _amount
     ) internal returns (uint256 _amountFreed) {
-        _amountFreed = balanceOfAsset();
+        uint256 looseAsset = balanceOfAsset();
+        if (_amount >= looseAsset) {
+            return looseAsset;
+        } else {
+            return _amount;
+        }
     }
 
     function _withdraw(

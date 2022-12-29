@@ -11,8 +11,8 @@ interface ILenderStrategy {
 }
 
 contract LenderDebtManager {
-    IVault public vault;
-    IERC20 public asset;
+    IVault public immutable vault;
+    IERC20 public immutable asset;
     address[] public strategies;
 
     uint256 public lastBlockUpdate;
@@ -20,6 +20,7 @@ contract LenderDebtManager {
     constructor(IVault _vault) {
         vault = _vault;
         asset = IERC20(_vault.asset());
+        lastBlockUpdate = block.timestamp;
     }
 
     function addStrategy(address _strategy /* onlyAuthorized */) external {
@@ -48,22 +49,43 @@ contract LenderDebtManager {
     }
 
     function updateAllocations() public {
-        (uint256 _lowest, , uint256 _highest, ) = estimateAdjustPosition();
+        (
+            uint256 _lowest,
+            uint256 _lowestApr,
+            uint256 _highest,
+            uint256 _potential
+        ) = estimateAdjustPosition();
 
-        address _lowestStrategy = strategies[_lowest];
-        address _highestStrategy = strategies[_highest];
-        uint256 _lowestCurrentDebt = vault
-            .strategies(_lowestStrategy)
-            .current_debt;
-        uint256 _highestCurrentDebt = vault
-            .strategies(_highestStrategy)
-            .current_debt;
+        // only pull out if we can do better
+        if (_potential > _lowestApr) {
+            address _lowestStrategy = strategies[_lowest];
 
-        vault.update_debt(_lowestStrategy, 0);
-        vault.update_debt(
-            _highestStrategy,
-            _lowestCurrentDebt + _highestCurrentDebt
-        );
+            // harvest all profits
+            vault.tend_strategy(_lowestStrategy);
+
+            // report to the vault so it doesnt leave anything behind
+            vault.process_report(_lowestStrategy);
+
+            // update the debt down to 0
+            vault.update_debt(_lowestStrategy, 0);
+        }
+
+        uint256 _totalIdle = vault.total_idle();
+
+        // deposit all thats possible
+        if (_totalIdle > 0) {
+            address _highestStrategy = strategies[_highest];
+            uint256 _highestCurrentDebt = vault
+                .strategies(_highestStrategy)
+                .current_debt;
+
+            vault.update_debt(
+                _highestStrategy,
+                _totalIdle + _highestCurrentDebt
+            );
+
+            lastBlockUpdate = block.timestamp;
+        }
     }
 
     //estimates highest and lowest apr lenders. Public for debugging purposes but not much use to general public
@@ -79,7 +101,7 @@ contract LenderDebtManager {
     {
         uint256 strategyCount = strategies.length;
         if (strategyCount == 0) {
-            return (type(uint256).max, 0, type(uint256).max, 0);
+            return (0, type(uint256).max, 0, 0);
         }
 
         if (strategyCount == 1) {
@@ -97,7 +119,7 @@ contract LenderDebtManager {
         _lowestApr = type(uint256).max;
         _lowest = 0;
         uint256 lowestNav = 0;
-        for (uint256 i = 0; i < strategyCount; ++i) {
+        for (uint256 i; i < strategyCount; ++i) {
             ILenderStrategy _strategy = ILenderStrategy(strategies[i]);
             uint256 _strategyNav = vault
                 .strategies(address(_strategy))
@@ -117,10 +139,9 @@ contract LenderDebtManager {
         uint256 highestApr = 0;
         _highest = 0;
 
-        for (uint256 i = 0; i < strategyCount; ++i) {
-            uint256 apr;
+        for (uint256 i; i < strategyCount; ++i) {
             ILenderStrategy _strategy = ILenderStrategy(strategies[i]);
-            apr = _strategy.aprAfterDebtChange(int256(toAdd));
+            uint256 apr = _strategy.aprAfterDebtChange(int256(toAdd));
 
             if (apr > highestApr) {
                 highestApr = apr;
@@ -128,5 +149,10 @@ contract LenderDebtManager {
                 _potential = apr;
             }
         }
+    }
+
+    // External function get the full array of strategies
+    function getStrategies() external view returns (address[] memory) {
+        return strategies;
     }
 }
