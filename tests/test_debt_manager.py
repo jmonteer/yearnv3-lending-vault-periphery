@@ -37,8 +37,8 @@ def test_rebalance(
     debt_manager = setup_debt_manager(vault, [strategy1, strategy2])
     tx_view = debt_manager.estimateAdjustPosition(sender=gov)
 
-    assert tx_view._lowest == 1  # strategy2
-    assert tx_view._highest == 0  # strategy1
+    assert tx_view._lowest == strategy2
+    assert tx_view._highest == strategy1
 
     vault.update_max_debt_for_strategy(strategy1.address, int(1e18), sender=gov)
     vault.update_max_debt_for_strategy(strategy2.address, int(1e18), sender=gov)
@@ -84,8 +84,8 @@ def test_rebalance__with_gain(
     debt_manager = setup_debt_manager(vault, [strategy1, strategy2])
     tx_view = debt_manager.estimateAdjustPosition(sender=gov)
 
-    assert tx_view._lowest == 1  # strategy2
-    assert tx_view._highest == 0  # strategy1
+    assert tx_view._lowest == strategy2
+    assert tx_view._highest == strategy1
 
     vault.update_max_debt_for_strategy(strategy1.address, int(1e18), sender=gov)
     vault.update_max_debt_for_strategy(strategy2.address, int(1e18), sender=gov)
@@ -134,8 +134,8 @@ def test_no_rebalance(
     debt_manager = setup_debt_manager(vault, [strategy1, strategy2])
     tx_view = debt_manager.estimateAdjustPosition(sender=gov)
 
-    assert tx_view._lowest == 1  # strategy2
-    assert tx_view._highest == 0  # strategy1
+    assert tx_view._lowest == strategy2
+    assert tx_view._highest == strategy1
 
     vault.update_max_debt_for_strategy(strategy1.address, int(1e18), sender=gov)
     vault.update_max_debt_for_strategy(strategy2.address, int(1e18), sender=gov)
@@ -184,8 +184,8 @@ def test_no_rebalance__adds_debt(
     debt_manager = setup_debt_manager(vault, [strategy1, strategy2])
     tx_view = debt_manager.estimateAdjustPosition(sender=gov)
 
-    assert tx_view._lowest == 1  # strategy2
-    assert tx_view._highest == 0  # strategy1
+    assert tx_view._lowest == strategy2
+    assert tx_view._highest == strategy1
 
     vault.update_max_debt_for_strategy(strategy1.address, int(1e18), sender=gov)
     vault.update_max_debt_for_strategy(strategy2.address, int(1e18), sender=gov)
@@ -231,8 +231,8 @@ def test_rebalance__with_min_idle(
     debt_manager = setup_debt_manager(vault, [strategy1, strategy2])
     tx_view = debt_manager.estimateAdjustPosition(sender=gov)
 
-    assert tx_view._lowest == 1  # strategy2
-    assert tx_view._highest == 0  # strategy1
+    assert tx_view._lowest == strategy2
+    assert tx_view._highest == strategy1
 
     vault.update_max_debt_for_strategy(strategy1.address, int(1e18), sender=gov)
     vault.update_max_debt_for_strategy(strategy2.address, int(1e18), sender=gov)
@@ -281,8 +281,8 @@ def test_rebalance__with_gain_and_min_idle(
     debt_manager = setup_debt_manager(vault, [strategy1, strategy2])
     tx_view = debt_manager.estimateAdjustPosition(sender=gov)
 
-    assert tx_view._lowest == 1  # strategy2
-    assert tx_view._highest == 0  # strategy1
+    assert tx_view._lowest == strategy2
+    assert tx_view._highest == strategy1
 
     vault.update_max_debt_for_strategy(strategy1.address, int(1e18), sender=gov)
     vault.update_max_debt_for_strategy(strategy2.address, int(1e18), sender=gov)
@@ -335,8 +335,8 @@ def test_no_rebalance__with_min_idle(
     debt_manager = setup_debt_manager(vault, [strategy1, strategy2])
     tx_view = debt_manager.estimateAdjustPosition(sender=gov)
 
-    assert tx_view._lowest == 1  # strategy2
-    assert tx_view._highest == 0  # strategy1
+    assert tx_view._lowest == strategy2
+    assert tx_view._highest == strategy1
 
     vault.update_max_debt_for_strategy(strategy1.address, int(1e18), sender=gov)
     vault.update_max_debt_for_strategy(strategy2.address, int(1e18), sender=gov)
@@ -388,8 +388,8 @@ def test_no_rebalance__adds_debt__with_min_idle(
     debt_manager = setup_debt_manager(vault, [strategy1, strategy2])
     tx_view = debt_manager.estimateAdjustPosition(sender=gov)
 
-    assert tx_view._lowest == 1  # strategy2
-    assert tx_view._highest == 0  # strategy1
+    assert tx_view._lowest == strategy2
+    assert tx_view._highest == strategy1
 
     vault.update_max_debt_for_strategy(strategy1.address, int(1e18), sender=gov)
     vault.update_max_debt_for_strategy(strategy2.address, int(1e18), sender=gov)

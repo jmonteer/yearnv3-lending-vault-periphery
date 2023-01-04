@@ -17,13 +17,26 @@ contract LenderDebtManager {
 
     uint256 public lastBlockUpdate;
 
+    address public owner;
+
+    modifier onlyAuthorized() {
+        checkAuthorized();
+        _;
+    }
+
+    function checkAuthorized() internal view {
+        require(owner == msg.sender, "!authorized");
+    }
+
     constructor(IVault _vault) {
         vault = _vault;
         asset = IERC20(_vault.asset());
         lastBlockUpdate = block.timestamp;
+
+        owner = msg.sender;
     }
 
-    function addStrategy(address _strategy /* onlyAuthorized */) external {
+    function addStrategy(address _strategy) external onlyAuthorized {
         require(vault.strategies(_strategy).activation != 0);
 
         for (uint256 i = 0; i < strategies.length; ++i) {
@@ -33,8 +46,12 @@ contract LenderDebtManager {
         strategies.push(_strategy);
     }
 
-    // TODO: Permissionless remove when not in vault, permissioned when in vault
-    function removeStrategy(address _strategy /* onlyAuthorized */) external {
+    // Permissionless remove when not in vault, permissioned when in vault
+    function removeStrategy(address _strategy) external {
+        if (vault.strategies(_strategy).activation != 0) {
+            checkAuthorized();
+        }
+
         uint256 strategyCount = strategies.length;
         for (uint256 i = 0; i < strategyCount; ++i) {
             if (strategies[i] == _strategy) {
@@ -50,39 +67,33 @@ contract LenderDebtManager {
 
     function updateAllocations() public {
         (
-            uint256 _lowest,
+            address _lowest,
             uint256 _lowestApr,
-            uint256 _highest,
+            address _highest,
             uint256 _potential
         ) = estimateAdjustPosition();
 
         // only pull out if we can do better
         if (_potential > _lowestApr) {
-            address _lowestStrategy = strategies[_lowest];
-
             // harvest all profits
-            vault.tend_strategy(_lowestStrategy);
+            vault.tend_strategy(_lowest);
 
             // report to the vault so it doesnt leave anything behind
-            vault.process_report(_lowestStrategy);
+            vault.process_report(_lowest);
 
             // update the debt down to 0
-            vault.update_debt(_lowestStrategy, 0);
+            vault.update_debt(_lowest, 0);
         }
 
         uint256 _totalIdle = vault.total_idle();
 
         // deposit all thats possible
         if (_totalIdle > 0) {
-            address _highestStrategy = strategies[_highest];
             uint256 _highestCurrentDebt = vault
-                .strategies(_highestStrategy)
+                .strategies(_highest)
                 .current_debt;
 
-            vault.update_debt(
-                _highestStrategy,
-                _totalIdle + _highestCurrentDebt
-            );
+            vault.update_debt(_highest, _totalIdle + _highestCurrentDebt);
 
             lastBlockUpdate = block.timestamp;
         }
@@ -93,9 +104,9 @@ contract LenderDebtManager {
         public
         view
         returns (
-            uint256 _lowest,
+            address _lowest,
             uint256 _lowestApr,
-            uint256 _highest,
+            address _highest,
             uint256 _potential
         )
     {
@@ -104,13 +115,13 @@ contract LenderDebtManager {
 
         uint256 strategyCount = _strategies.length;
         if (strategyCount == 0) {
-            return (0, type(uint256).max, 0, 0);
+            return (address(0), type(uint256).max, address(0), 0);
         }
 
         if (strategyCount == 1) {
             ILenderStrategy _strategy = ILenderStrategy(_strategies[0]);
             uint256 apr = _strategy.aprAfterDebtChange(int256(0));
-            return (0, apr, 0, apr);
+            return (address(_strategy), apr, address(_strategy), apr);
         }
 
         //all loose assets are to be invested
@@ -120,7 +131,7 @@ contract LenderDebtManager {
         // get the lowest apr strat
         // cycle through and see who could take its funds plus want for the highest apr
         _lowestApr = type(uint256).max;
-        _lowest = 0;
+        _lowest;
         uint256 lowestNav = 0;
         for (uint256 i; i < strategyCount; ++i) {
             ILenderStrategy _strategy = ILenderStrategy(_strategies[i]);
@@ -131,7 +142,7 @@ contract LenderDebtManager {
                 uint256 apr = _strategy.aprAfterDebtChange(int256(0));
                 if (apr < _lowestApr) {
                     _lowestApr = apr;
-                    _lowest = i;
+                    _lowest = address(_strategy);
                     lowestNav = _strategyNav;
                 }
             }
@@ -140,17 +151,17 @@ contract LenderDebtManager {
         uint256 toAdd = lowestNav + looseAssets;
 
         uint256 highestApr = 0;
-        _highest = 0;
+        _highest;
         for (uint256 i; i < strategyCount; ++i) {
             ILenderStrategy _strategy = ILenderStrategy(_strategies[i]);
             uint256 apr = _strategy.aprAfterDebtChange(int256(looseAssets));
 
             if (apr > highestApr) {
                 highestApr = apr;
-                _highest = i;
+                _highest = address(_strategy);
             }
         }
-        _potential = ILenderStrategy(_strategies[_highest]).aprAfterDebtChange(
+        _potential = ILenderStrategy(_highest).aprAfterDebtChange(
             int256(toAdd)
         );
     }
@@ -158,5 +169,28 @@ contract LenderDebtManager {
     // External function get the full array of strategies
     function getStrategies() external view returns (address[] memory) {
         return strategies;
+    }
+
+    function _processReport(address _strategy, bool _tend) internal {
+        if (_tend) {
+            vault.tend_strategy(_strategy);
+        }
+
+        vault.process_report(_strategy);
+    }
+
+    function processReport(address _strategy) external onlyAuthorized {
+        require(vault.strategies(_strategy).activation != 0, "not active");
+        _processReport(_strategy, false);
+    }
+
+    function tendAndReport(address _strategy) external onlyAuthorized {
+        require(vault.strategies(_strategy).activation != 0, "not active");
+        _processReport(_strategy, true);
+    }
+
+    function tendStrategy(address _strategy) external onlyAuthorized {
+        require(vault.strategies(_strategy).activation != 0, "not active");
+        vault.tend_strategy(_strategy);
     }
 }
