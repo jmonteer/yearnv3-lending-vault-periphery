@@ -99,13 +99,16 @@ contract LenderDebtManager {
             uint256 _potential
         )
     {
-        uint256 strategyCount = strategies.length;
+        // cache array to save storage loads
+        address[] memory _strategies = strategies;
+
+        uint256 strategyCount = _strategies.length;
         if (strategyCount == 0) {
             return (0, type(uint256).max, 0, 0);
         }
 
         if (strategyCount == 1) {
-            ILenderStrategy _strategy = ILenderStrategy(strategies[0]);
+            ILenderStrategy _strategy = ILenderStrategy(_strategies[0]);
             uint256 apr = _strategy.aprAfterDebtChange(int256(0));
             return (0, apr, 0, apr);
         }
@@ -120,7 +123,7 @@ contract LenderDebtManager {
         _lowest = 0;
         uint256 lowestNav = 0;
         for (uint256 i; i < strategyCount; ++i) {
-            ILenderStrategy _strategy = ILenderStrategy(strategies[i]);
+            ILenderStrategy _strategy = ILenderStrategy(_strategies[i]);
             uint256 _strategyNav = vault
                 .strategies(address(_strategy))
                 .current_debt;
@@ -138,17 +141,16 @@ contract LenderDebtManager {
 
         uint256 highestApr = 0;
         _highest = 0;
-
         for (uint256 i; i < strategyCount; ++i) {
-            ILenderStrategy _strategy = ILenderStrategy(strategies[i]);
-            uint256 apr = _strategy.aprAfterDebtChange(int256(toAdd));
+            ILenderStrategy _strategy = ILenderStrategy(_strategies[i]);
+            uint256 apr = _strategy.aprAfterDebtChange(int256(looseAssets));
 
             if (apr > highestApr) {
                 highestApr = apr;
                 _highest = i;
-                _potential = apr;
             }
         }
+        _potential = ILenderStrategy(_strategies[_highest]).aprAfterDebtChange(int256(toAdd));
     }
 
     // External function get the full array of strategies
