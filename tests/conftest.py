@@ -4,7 +4,7 @@ from utils.constants import MAX_INT, ROLES, WEEK
 
 # this should be the address of the ERC-20 used by the strategy/vault
 ASSET_ADDRESS = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"  # USDC
-ASSET_WHALE_ADDRESS = "0x0A59649758aa4d66E25f08Dd01271e891fe52199"  # USDC WHALE
+ASSET_WHALE_ADDRESS = "0x39aa39c021dfbae8fac545936693ac917d5e7563"  # USDC WHALE
 
 
 @pytest.fixture(scope="session")
