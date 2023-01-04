@@ -150,7 +150,9 @@ contract LenderDebtManager {
                 _highest = i;
             }
         }
-        _potential = ILenderStrategy(_strategies[_highest]).aprAfterDebtChange(int256(toAdd));
+        _potential = ILenderStrategy(_strategies[_highest]).aprAfterDebtChange(
+            int256(toAdd)
+        );
     }
 
     // External function get the full array of strategies
